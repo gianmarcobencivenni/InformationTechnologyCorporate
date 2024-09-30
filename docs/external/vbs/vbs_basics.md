@@ -50,7 +50,7 @@ nome = "Mario Rossi"
 
 ### Costanti
 ```vbscript
-Copia codice
+
 Const PI = 3.1416
 ```
 
@@ -126,6 +126,22 @@ On Error Resume Next
 - On Error GoTo 0: Disabilita la gestione degli errori.
 ```vbscript
 On Error GoTo 0
+```
+
+
+### Oggetti Principali
+- WScript: Oggetto principale quando si eseguono script tramite Windows Script Host.
+```vbscript
+WScript.Echo "Messaggio"
+```
+- FileSystemObject: Per manipolare file e cartelle.
+```vbscript
+Set fso = CreateObject("Scripting.FileSystemObject")
+```
+- Dictionary: Struttura dati per memorizzare coppie chiave-valore.
+```vbscript
+Set dict = CreateObject("Scripting.Dictionary")
+dict.Add "chiave", "valore"
 ```
 
 
