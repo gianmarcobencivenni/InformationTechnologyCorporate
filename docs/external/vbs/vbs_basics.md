@@ -101,15 +101,8 @@ Loop
 ```
 
 ### Funzioni e Subroutine
-
-- Subroutine
-```vbscript
-Sub NomeSubroutine(parametri)
-    ' Codice
-End Sub
-```
-
-- Funzioni
+In VBScript, funzioni e subroutine sono entrambe utilizzate per organizzare e riutilizzare il codice, ma ci sono alcune differenze chiave tra i due:
+- Funzione: Una funzione è progettata per restituire un valore. Puoi utilizzare l'istruzione Function per definirla e l'istruzione FunctionName = valore per restituire il valore.
 ```vbscript
 Function NomeFunzione(parametri)
     ' Codice
@@ -117,15 +110,67 @@ Function NomeFunzione(parametri)
 End Function
 ```
 
-### Error Handling
-- On Error Resume Next: Ignora gli errori e continua l'esecuzione.
+- Subroutine: Una subroutine, definita con Sub, non restituisce alcun valore. Viene utilizzata principalmente per eseguire un blocco di codice senza restituire un risultato.
 ```vbscript
-On Error Resume Next
+Sub NomeSubroutine(parametri)
+    ' Codice
+End Sub
 ```
 
-- On Error GoTo 0: Disabilita la gestione degli errori.
+- Esempio pratico:
 ```vbscript
-On Error GoTo 0
+Function Somma(a, b)
+    Somma = a + b  ' Restituisce la somma
+End Function
+
+Sub StampaMessaggio()
+    WScript.Echo "Questo è un messaggio dalla subroutine"
+End Sub
+
+' Utilizzo delle funzioni e subroutine
+Dim risultato
+risultato = Somma(5, 10)  ' Chiamata alla funzione
+WScript.Echo "Risultato della somma: " & risultato
+
+StampaMessaggio()  ' Chiamata alla subroutine
+```
+
+### Error Handling
+In VBScript, la gestione degli errori non segue la stessa sintassi del costrutto try...except presente in linguaggi come Python o Java. Tuttavia, VBScript fornisce alcune istruzioni per gestire gli errori in modo efficace. Ecco come funziona:
+
+
+- **On Error Resume Next**: Questa istruzione consente di ignorare gli errori e di continuare l'esecuzione del codice. Quando si utilizza questa istruzione, se si verifica un errore, il controllo passa all'istruzione successiva.
+
+```vbscript
+
+On Error Resume Next
+' Codice che potrebbe generare un errore
+Dim x
+x = 1 / 0  ' Divisione per zero
+
+If Err.Number <> 0 Then
+    WScript.Echo "Si è verificato un errore: " & Err.Description
+End If
+
+' Reset dell'oggetto Err
+Err.Clear
+```
+
+- On Error GoTo: Questo approccio permette di reindirizzare il flusso di esecuzione a una parte specifica del codice in caso di errore. È simile al try...catch in altri linguaggi.
+
+```vbscript
+On Error GoTo ErrorHandler
+
+' Codice che potrebbe generare un errore
+Dim y
+y = 1 / 0  ' Divisione per zero
+
+Exit Sub  ' Esce dalla subroutine prima dell'handler
+
+ErrorHandler:
+    WScript.Echo "Si è verificato un errore: " & Err.Description
+    Err.Clear  ' Reset dell'oggetto Err
+End Sub
 ```
 
 
