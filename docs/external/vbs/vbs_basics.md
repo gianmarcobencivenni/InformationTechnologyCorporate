@@ -1,0 +1,147 @@
+# Guida Introduttiva a VBScript
+
+## Cos'è VBScript?
+
+**VBScript (Visual Basic Scripting Edition)** è un linguaggio di scripting sviluppato da Microsoft. Deriva da Visual Basic ed è pensato per essere un linguaggio leggero e facile da utilizzare per l'automazione di attività su piattaforme Windows.
+
+### Caratteristiche Principali:
+
+- **Interpretato**: VBScript è un linguaggio interpretato, il che significa che non richiede compilazione. Gli script vengono eseguiti dall'interprete integrato nel sistema operativo Windows.
+- **Semplicità**: Ha una sintassi semplice e facile da apprendere, soprattutto per chi ha familiarità con Visual Basic.
+- **Integrazione con Windows**: Può interagire direttamente con il sistema operativo Windows e con le applicazioni COM (Component Object Model).
+- **Utilizzo in Pagine Web**: In passato, VBScript era utilizzato per scripting lato client nelle pagine web all'interno di Internet Explorer. Tuttavia, questo uso è ormai obsoleto e non supportato nei browser moderni.
+
+## Tipologia di Linguaggio
+
+### Paradigma di Programmazione
+
+VBScript è principalmente un linguaggio di scripting **procedurale**. Non supporta la programmazione orientata agli oggetti (OOP) nel senso completo del termine, ma permette l'uso di **oggetti** tramite l'automazione COM.
+
+### Oggetti e COM
+
+- **Creazione di Oggetti COM**: VBScript può creare e manipolare oggetti COM utilizzando la funzione `CreateObject`. Questo permette di interagire con una vasta gamma di applicazioni e componenti di Windows, come Excel, Word, o componenti di sistema.
+  
+```vbscript
+Set objFSO = CreateObject("Scripting.FileSystemObject")
+```
+
+**Limitazioni OOP**: Non è possibile definire classi personalizzate, ereditarietà o polimorfismo come nei linguaggi orientati agli oggetti completi.
+
+## Utilizzo in Ambito Aziendale
+VBScript è ampiamente utilizzato nelle aziende per automatizzare attività amministrative e di gestione su sistemi Windows. Ecco alcuni esempi:
+
+- **Automazione di Office**: Interagire con applicazioni Microsoft Office come Excel, Word o Outlook per elaborare documenti, inviare email, generare report.
+
+- **Gestione di Sistema**: Script per gestire utenti, gruppi, permessi, installazione di software, backup, manipolazione del registro di sistema.
+
+- **Manipolazione di File e Cartelle**: Utilizzo del FileSystemObject per copiare, spostare, eliminare file e cartelle.
+
+- **Login Scripts**: Esecuzione di script all'accesso dell'utente per configurare l'ambiente di lavoro.
+
+- **Monitoraggio e Reportistica**: Raccolta di informazioni di sistema, monitoraggio di servizi, generazione di log.
+
+## Sintassi e Keywords Principali
+### Variabili
+Le variabili in VBScript sono debolmente tipizzate e non richiedono dichiarazione del tipo.
+```vbscript
+Dim nome
+nome = "Mario Rossi"
+```
+
+### Costanti
+```vbscript
+Copia codice
+Const PI = 3.1416
+```
+
+### Strutture di Controllo
+- If...Then...Else
+```vbscript
+If condizione Then
+    ' Codice se la condizione è vera
+Else
+    ' Codice se la condizione è falsa
+End If
+```
+
+- Select Case
+```vbscript
+Select Case espressione
+    Case valore1
+        ' Codice
+    Case valore2
+        ' Codice
+    Case Else
+        ' Codice
+End Select
+```
+
+
+- For...Next
+```vbscript
+For i = 1 To 10
+    ' Codice
+Next
+```
+
+
+- For Each...Next
+```vbscript
+For Each elemento In collezione
+    ' Codice
+Next
+```
+
+
+- Do While / Do Until
+```vbscript
+Do While condizione
+    ' Codice
+Loop
+```
+
+### Funzioni e Subroutine
+
+- Subroutine
+```vbscript
+Sub NomeSubroutine(parametri)
+    ' Codice
+End Sub
+```
+
+- Funzioni
+```vbscript
+Function NomeFunzione(parametri)
+    ' Codice
+    NomeFunzione = risultato
+End Function
+```
+
+### Error Handling
+- On Error Resume Next: Ignora gli errori e continua l'esecuzione.
+```vbscript
+On Error Resume Next
+```
+
+- On Error GoTo 0: Disabilita la gestione degli errori.
+```vbscript
+On Error GoTo 0
+```
+
+
+### Keywords Principali
+Ecco un elenco delle parole chiave più comuni in VBScript:
+
+- **Dim**: Dichiara una o più variabili.
+- **Set**: Assegna un riferimento a un oggetto.
+- **If, Then, Else, ElseIf, End If**: Struttura condizionale.
+- **Select Case, Case, End Select**: Struttura di selezione multipla.
+- **For, To, Step, Next**: Ciclo con contatore.
+- **For Each, In, Next**: Ciclo per iterare attraverso una collezione.
+- **Do, While, Until, Loop**: Ciclo basato su una condizione.
+- **Function, End Function**: Definisce una funzione che può restituire un valore.
+- **Sub, End Sub**: Definisce una subroutine che non restituisce un valore.
+- **Call**: Utilizzato per chiamare una subroutine.
+- **Const**: Dichiara una costante.
+- **On Error Resume Next**: Gestione degli errori.
+- **Option Explicit**: Richiede la dichiarazione esplicita di tutte le variabili utilizzando Dim.
