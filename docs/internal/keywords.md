@@ -11,6 +11,7 @@
    - [Ticketing](#31-ticketing)
    - [WFM (Workforce Management)](#32-wfm-workforce-management)
    - [HCM (Human Capital Management)](#33-hcm-human-capital-management)
+   - [Asset Management](#34-asset-management)
 4. [Gestione Finanziaria](#4-gestione-finanziaria)
    - [APEX, CAPEX, OPEX](#41-apex-capex-opex)
 5. [Processi di Acquisto](#5-processi-di-acquisto)
@@ -122,6 +123,21 @@ Alcuni software HCM comuni includono:
 - **ADP Workforce Now**
 - **BambooHR**
 
+### 3.4 Asset Management
+L'Asset Management si riferisce alla gestione strategica e operativa degli asset aziendali, che includono attrezzature, infrastrutture, e beni tecnologici. La gestione degli asset consente di ottimizzare il ciclo di vita degli stessi, migliorando la manutenzione, l'efficienza operativa e riducendo i costi.
+
+#### Dettagli tecnici:
+Dynamics 365 **Supply Chain Management** include funzionalità di Asset Management, fornendo strumenti per la pianificazione della manutenzione, il monitoraggio dello stato degli asset e l'analisi dei costi legati agli investimenti (CAPEX) e alle operazioni (OPEX).
+
+**Approfondimento Microsoft Dynamics 365**:  
+L'**Asset Management** in Dynamics 365 consente di integrare le operazioni legate alla manutenzione degli asset con **Power BI** per analizzare le prestazioni e ottimizzare le risorse aziendali. Inoltre, tramite **Power Automate**, è possibile automatizzare le richieste di manutenzione o gli avvisi sugli asset che necessitano di interventi.
+
+**Esempio di Journey (Manutenzione Preventiva)**:
+1. Un asset aziendale raggiunge una soglia di utilizzo critica.
+2. Il sistema genera automaticamente una richiesta di manutenzione.
+3. Il team responsabile della manutenzione viene notificato e programma l'intervento.
+4. Una volta completata la manutenzione, l'asset viene reintegrato e aggiornato nel sistema.
+
 ---
 
 ## 4. Gestione Finanziaria
@@ -148,6 +164,8 @@ Le funzionalità di **Dynamics 365 Finance** e **Project Operations** permettono
 
 ### 5.1 RDA (Richiesta di Acquisto)
 La Richiesta di Acquisto (RDA) formalizza la necessità di acquistare beni o servizi all'interno di un'organizzazione.
+- RDA e CAPEX: Un'RDA per l'acquisto di nuovi server o macchinari industriali rientra nelle spese CAPEX, poiché si tratta di investimenti in beni durevoli che contribuiscono all'operatività dell'azienda per un lungo periodo.
+- RDA e OPEX: Le RDA possono anche riguardare spese OPEX, come l'acquisto di materiali di consumo o servizi di supporto che sono necessari per il funzionamento quotidiano dell'organizzazione.
 
 #### Dettagli tecnici:
 Dynamics 365 **Supply Chain Management** integra il processo di RDA con la gestione degli acquisti, consentendo flussi di approvazione automatizzati tramite **Power Automate** e monitoraggio delle spese tramite **Dynamics 365 Finance**.
