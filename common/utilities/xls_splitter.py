@@ -7,6 +7,7 @@ from datetime import datetime
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Side, borders
 from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.worksheet import Worksheet
 
 # Ottieni la directory di lavoro corrente
 CWD = os.getcwd()
@@ -42,7 +43,7 @@ def remove_odd_columns(sheet):
         print(f"Colonna {col_letter} eliminata")
 
 
-def copy_header(source_sheet, target_sheet):
+def copy_header(source_sheet: Worksheet, target_sheet: Worksheet):
     # Copia le prime 12 righe (intestazione) e le celle unite
     for row_index in range(1, 13):  # Copiamo le prime 12 righe
         for col_index in range(1, source_sheet.max_column + 1):
@@ -94,8 +95,9 @@ def format_date_cell(cell):
 def split_excel(input_file, product_name, output_folder, N):
     # Carica il file excel originale
     print(f"Loading workload.")
-    wb = load_workbook(input_file)
+    wb: Workbook = load_workbook(input_file)
     sheet = wb.active
+    print(f"Done.")
 
     # Determina il numero di righe totali (a partire dalla riga 13)
     total_rows = sheet.max_row - 12  # Escludiamo le prime 12 righe di intestazione
@@ -109,6 +111,7 @@ def split_excel(input_file, product_name, output_folder, N):
         print(f"Coping header.")
         # Copia l'intestazione con la formattazione e le celle unite
         copy_header(sheet, new_sheet)
+        print(f"Done.")
 
         # Calcola l'intervallo di righe per questo file
         start_row = 13 + file_index * rows_per_file
@@ -134,11 +137,11 @@ def split_excel(input_file, product_name, output_folder, N):
         os.makedirs(output_folder, exist_ok=True)
         output_file = f"{output_folder}\\{product_name}_part_{file_index + 1}.xlsx"
         new_wb.save(output_file)
-        print(f"Creato il file {output_file}")
+        print(f"File {output_file} created.")
 
 
 # Esempio di utilizzo:
-PRODUCT_NAME = f"LG 30_12_2023"
+PRODUCT_NAME = f"LG 31_12_2023"
 input_file = f"{CWD}\\input\\{PRODUCT_NAME}.xlsx"
 output_folder = f"{CWD}\\output\\{PRODUCT_NAME}"
 N = 10  # Numero di file di output
