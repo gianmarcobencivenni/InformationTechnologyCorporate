@@ -1,15 +1,16 @@
-from openpyxl import load_workbook, Workbook
-from openpyxl.utils import get_column_letter
-from openpyxl.styles import Side, borders
 import math
 import os
 import sys
 from copy import copy
 from datetime import datetime
 
+from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Side, borders
+from openpyxl.utils import get_column_letter
+
 # Ottieni la directory di lavoro corrente
-cwd = os.getcwd()
-sys.path.append(cwd)
+CWD = os.getcwd()
+sys.path.append(CWD)
 
 
 def get_no_border_style():
@@ -90,7 +91,7 @@ def format_date_cell(cell):
     return cell.value
 
 
-def split_excel(input_file, N):
+def split_excel(input_file, product_name, output_folder, N):
     # Carica il file excel originale
     print(f"Loading workload.")
     wb = load_workbook(input_file)
@@ -130,12 +131,17 @@ def split_excel(input_file, N):
                 print(f"Cell ({row_index},{col_index}) copied.")
 
         # Salva il nuovo file
-        output_file = f"LG 31_12_2023_part_{file_index + 1}.xlsx"
+        os.makedirs(output_folder, exist_ok=True)
+        output_file = f"{output_folder}\\{product_name}_part_{file_index + 1}.xlsx"
         new_wb.save(output_file)
         print(f"Creato il file {output_file}")
 
 
 # Esempio di utilizzo:
-input_file = "C:\\Users\\p082596\\python_workspace\\training\\LG 31_12_2023.xlsx"
+PRODUCT_NAME = f"LG 30_12_2023"
+input_file = f"{CWD}\\input\\{PRODUCT_NAME}.xlsx"
+output_folder = f"{CWD}\\output\\{PRODUCT_NAME}"
 N = 10  # Numero di file di output
-split_excel(input_file, N)
+split_excel(
+    input_file=input_file, product_name=PRODUCT_NAME, output_folder=output_folder, N=N
+)
