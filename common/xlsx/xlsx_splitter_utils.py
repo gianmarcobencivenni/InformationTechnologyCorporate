@@ -140,11 +140,11 @@ def split_excel(input_file, product_name, output_folder, N):
         print(f"File {output_file} created.")
 
 
-# Esempio di utilizzo:
-PRODUCT_NAME = f"LG 31_12_2023"
-input_file = f"{CWD}\\input\\{PRODUCT_NAME}.xlsx"
-output_folder = f"{CWD}\\output\\{PRODUCT_NAME}"
-N = 10  # Numero di file di output
-split_excel(
-    input_file=input_file, product_name=PRODUCT_NAME, output_folder=output_folder, N=N
-)
+# # Example
+# PRODUCT_NAME = f"LG 31_12_2023"
+# input_file = f"{CWD}\\input\\{PRODUCT_NAME}.xlsx"
+# output_folder = f"{CWD}\\output\\{PRODUCT_NAME}"
+# N = 10  # Numero di file di output
+# split_excel(
+#     input_file=input_file, product_name=PRODUCT_NAME, output_folder=output_folder, N=N
+# )
