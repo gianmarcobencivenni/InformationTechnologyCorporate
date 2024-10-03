@@ -1,11 +1,13 @@
+import argparse
 import csv
-from datetime import datetime
 import os
 import sys
+from copy import copy
+from datetime import datetime
+from tqdm import tqdm
+
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
-from copy import copy
-from openpyxl import load_workbook
 
 # Ottieni la directory di lavoro corrente
 CWD = os.getcwd()
@@ -89,9 +91,9 @@ def copy_style(source_sheet, target_cell, source_row, source_col):
         target_cell.alignment = copy(source_cell.alignment)
 
 
-def apply_alternating_styles(source_excel_file, new_sheet):
+def apply_alternating_styles_and_dimensions(source_excel_file, new_sheet):
     """
-    Applica lo stile delle righe 13 e 14 del file Excel originale su righe dispari e pari rispettivamente.
+    Applica lo stile e le dimensioni delle righe 13 e 14 del file Excel originale su righe dispari e pari rispettivamente.
     """
     wb = load_workbook(source_excel_file)
     sheet = wb.active
@@ -100,15 +102,44 @@ def apply_alternating_styles(source_excel_file, new_sheet):
 
     for row_index in range(13, new_sheet.max_row + 1):
         if row_index % 2 == 1:
-            # Riga dispari: copia lo stile dalla riga 13
-            for col_index in range(1, max_col + 1):
-                target_cell = new_sheet.cell(row=row_index, column=col_index)
-                copy_style(sheet, target_cell, 13, col_index)
+            # Riga dispari: copia lo stile e le dimensioni dalla riga 13
+            source_row = 13
         else:
-            # Riga pari: copia lo stile dalla riga 14
-            for col_index in range(1, max_col + 1):
-                target_cell = new_sheet.cell(row=row_index, column=col_index)
-                copy_style(sheet, target_cell, 14, col_index)
+            # Riga pari: copia lo stile e le dimensioni dalla riga 14
+            source_row = 14
+
+        # Copia lo stile delle celle
+        for col_index in range(1, max_col + 1):
+            target_cell = new_sheet.cell(row=row_index, column=col_index)
+            copy_style(sheet, target_cell, source_row, col_index)
+
+        # Copia l'altezza della riga
+        new_sheet.row_dimensions[row_index].height = sheet.row_dimensions[
+            source_row
+        ].height
+
+    # Copia la larghezza delle colonne (basata su righe 13 e 14)
+    for col_index in range(1, max_col + 1):
+        col_letter = get_column_letter(col_index)
+        new_sheet.column_dimensions[col_letter].width = sheet.column_dimensions[
+            col_letter
+        ].width
+
+    # Copia la struttura delle celle unite
+    for merged_range in sheet.merged_cells.ranges:
+        new_sheet.merge_cells(str(merged_range))
+
+    # Ottieni tutte le celle unite della riga 13 come riferimento
+    for merged_range in sheet.merged_cells.ranges:
+        if merged_range.min_row == 13:  # Se il merge parte dalla riga 13
+            start_col, end_col = merged_range.min_col, merged_range.max_col
+            for row_index in range(13, new_sheet.max_row + 1):
+                new_sheet.merge_cells(
+                    start_row=row_index,
+                    start_column=start_col,
+                    end_row=row_index,
+                    end_column=end_col,
+                )
 
 
 def split_csv_to_excel(
@@ -116,6 +147,7 @@ def split_csv_to_excel(
 ):
     """
     Suddivide i dati dal CSV in N file Excel, mantenendo l'intestazione e la formattazione.
+    I dati verranno sempre scritti a partire dalla riga 13 nel file di output.
     """
     # Apriamo il CSV e leggiamo tutte le righe
     with open(source_csv_file, mode="r", newline="", encoding="utf-8") as f:
@@ -127,50 +159,73 @@ def split_csv_to_excel(
         total_rows % N > 0
     )  # Calcola il numero di righe per ogni file
 
-    for file_index in range(N):
-        new_wb = Workbook()
-        new_sheet = new_wb.active
+    # Inizializza la barra di progresso
+    with tqdm(total=N, desc="Splitting files", unit="file") as pbar:
+        for file_index in range(N):
+            new_wb = Workbook()
+            new_sheet = new_wb.active
 
-        # Copia l'intestazione dal file Excel originale
-        copy_header_and_style(source_excel_file, new_sheet)
+            # Copia l'intestazione dal file Excel originale
+            copy_header_and_style(source_excel_file, new_sheet)
 
-        # Calcola l'intervallo di righe da copiare in questo file
-        start_row = 12 + file_index * rows_per_file
-        end_row = min(12 + (file_index + 1) * rows_per_file, len(rows))
+            # Calcola l'intervallo di righe da copiare in questo file
+            start_row = 12 + file_index * rows_per_file
+            end_row = min(12 + (file_index + 1) * rows_per_file, len(rows))
 
-        # Copia le righe di dati
-        for row_index in range(start_row, end_row):
-            for col_index, cell_value in enumerate(rows[row_index], 1):
-                new_sheet.cell(
-                    row=row_index + 1,
-                    column=col_index,
-                    value=format_date_value(cell_value),
-                )
+            # Aggiustamento: scrivere i dati sempre a partire dalla riga 13 nel nuovo file
+            new_start_row = 13
 
-        # Applica lo stile alternato
-        apply_alternating_styles(source_excel_file, new_sheet)
+            # Copia le righe di dati dal CSV a partire dalla riga start_row
+            for row_index in range(start_row, end_row):
+                for col_index, cell_value in enumerate(rows[row_index], 1):
+                    new_sheet.cell(
+                        row=new_start_row + (row_index - start_row),
+                        column=col_index,
+                        value=format_date_value(cell_value),
+                    )
 
-        # Copia le celle unite
-        wb = load_workbook(source_excel_file)
-        sheet = wb.active
-        for merged_range in sheet.merged_cells.ranges:
-            new_sheet.merge_cells(str(merged_range))
+            # Applica lo stile alternato
+            apply_alternating_styles_and_dimensions(source_excel_file, new_sheet)
 
-        # Salva il file Excel
-        os.makedirs(output_folder, exist_ok=True)
-        output_file = f"{output_folder}/{product_name}_part_{file_index + 1}.xlsx"
-        new_wb.save(output_file)
-        print(f"Creato file: {output_file}")
+            # Salva il file Excel
+            os.makedirs(output_folder, exist_ok=True)
+            output_file = f"{output_folder}/{product_name}_part_{file_index + 1}.xlsx"
+            new_wb.save(output_file)
+            print(f"\nCreato file: {output_file}")
+
+            # Aggiorna la barra di progresso
+            pbar.update(1)  # Aggiorna il progresso di 1 file
 
 
-PRODUCT_NAME = f"LG 31_12_2023"
-MODEL_NAME = f"LG 30_12_2023"
-input_file = f"{CWD}\\input\\{PRODUCT_NAME}.xlsx"
-output_file_csv = f"{CWD}\\input\\{PRODUCT_NAME}.csv"
-output_folder = f"{CWD}\\output\\{PRODUCT_NAME}"
-model = f"{CWD}\\input\\{MODEL_NAME}.xlsx"
-excel_to_csv(input_file, output_file_csv)
+def main():
+    parser = argparse.ArgumentParser(description="Process Excel files and split them.")
+    parser.add_argument(
+        "--csv", action="store_true", help="Utilizza CSV esistente, se presente"
+    )
+    args = parser.parse_args()
 
-N = 5  # Numero di file di output
+    PRODUCT_NAME = f"LG 31_12_2023"
+    MODEL_NAME = f"LG 30_12_2023"
+    input_file = f"{CWD}\\input\\{PRODUCT_NAME}.xlsx"
+    output_file_csv = f"{CWD}\\input\\{PRODUCT_NAME}.csv"
+    output_folder = f"{CWD}\\output\\{PRODUCT_NAME}"
+    model = f"{CWD}\\input\\{MODEL_NAME}.xlsx"
 
-split_csv_to_excel(model, output_file_csv, output_folder, PRODUCT_NAME, N)
+    # Se l'opzione --csv non è stata specificata, crea il CSV
+    if not args.csv:
+        excel_to_csv(input_file, output_file_csv)
+    else:
+        print(f"Utilizzo del CSV esistente: {output_file_csv}")
+
+    N = 200  # Numero di file di output
+    split_csv_to_excel(
+        source_excel_file=model,
+        source_csv_file=output_file_csv,
+        output_folder=output_folder,
+        product_name=PRODUCT_NAME,
+        N=N,
+    )
+
+
+if __name__ == "__main__":
+    main()
