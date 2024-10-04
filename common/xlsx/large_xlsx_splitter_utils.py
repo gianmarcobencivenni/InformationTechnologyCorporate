@@ -55,19 +55,22 @@ def excel_to_csv(
     logger.info(f"CSV file created: {output_file_csv}")
 
 
-def copy_header_and_style(model_xlsx_path: str, target_sheet: Worksheet) -> None:
+def copy_header_and_style(
+    model_xlsx_path: str, target_sheet: Worksheet, header_rows: int
+) -> None:
     """
     Copies the header and formatting from the original Excel file to the new output file.
 
     Args:
         model_xlsx_path (str): Path to the Excel file used as a model for formatting.
         target_sheet (Worksheet): The target sheet where the header and styles will be copied.
+        header_rows (int): Number of header rows to copy.
     """
     wb = load_workbook(model_xlsx_path)
     sheet = wb.active
 
-    # Copy the first 12 rows (header and formatting)
-    for row_index in range(1, 13):  # 12 header rows
+    # Copy the header rows (based on header_rows)
+    for row_index in range(1, header_rows + 1):
         for col_index in range(1, sheet.max_column + 1):
             cell = sheet.cell(row=row_index, column=col_index)
             new_cell = target_sheet.cell(
@@ -89,7 +92,7 @@ def copy_header_and_style(model_xlsx_path: str, target_sheet: Worksheet) -> None
                 )
 
 
-def format_date_value(value) -> str | int | float:
+def format_value(value) -> str | int | float:
     """
     Applies the desired format to date strings in the format 'YYYY-MM-DD HH:MM:SS'.
     Also converts valid numeric strings to floats or integers.
@@ -138,31 +141,36 @@ def copy_style(
         target_cell.fill = copy(source_cell.fill)
         target_cell.border = copy(source_cell.border)
         target_cell.alignment = copy(source_cell.alignment)
-        target_cell.number_format = copy(source_cell.number_format)
+        target_cell.number_format = source_cell.number_format
 
 
 def apply_alternating_styles_and_dimensions(
-    model_xlsx_path: str, new_sheet: Worksheet
+    model_xlsx_path: str,
+    new_sheet: Worksheet,
+    table_start_row: int,
+    row_ref_odd: int,
+    row_ref_even: int,
 ) -> None:
     """
-    Applies the style and dimensions from rows 13 and 14 of the original Excel file to odd and even rows, respectively.
+    Applies the style and dimensions from specific rows of the original Excel file to odd and even rows.
 
     Args:
         model_xlsx_path (str): Path to the Excel file used as a model for formatting.
         new_sheet (Worksheet): The target sheet where the styles and dimensions will be applied.
+        table_start_row (int): The first row of the data table.
+        row_ref_odd (int): The row number to use as a style reference for odd rows.
+        row_ref_even (int): The row number to use as a style reference for even rows.
     """
     wb = load_workbook(model_xlsx_path)
     sheet = wb.active
 
     max_col = sheet.max_column
 
-    for row_index in range(13, new_sheet.max_row + 1):
+    for row_index in range(table_start_row, new_sheet.max_row + 1):
         if row_index % 2 == 1:
-            # Odd row: copy style and dimensions from row 13
-            source_row = 13
+            source_row = row_ref_odd
         else:
-            # Even row: copy style and dimensions from row 14
-            source_row = 14
+            source_row = row_ref_even
 
         # Copy cell styles
         for col_index in range(1, max_col + 1):
@@ -174,7 +182,7 @@ def apply_alternating_styles_and_dimensions(
             source_row
         ].height
 
-    # Copy column widths (based on rows 13 and 14)
+    # Copy column widths (based on rows used for style)
     for col_index in range(1, max_col + 1):
         col_letter = get_column_letter(col_index)
         new_sheet.column_dimensions[col_letter].width = sheet.column_dimensions[
@@ -185,11 +193,11 @@ def apply_alternating_styles_and_dimensions(
     for merged_range in sheet.merged_cells.ranges:
         new_sheet.merge_cells(str(merged_range))
 
-    # Get all merged cells in row 13 as a reference
+    # Get all merged cells in row_ref_odd as a reference for merging
     for merged_range in sheet.merged_cells.ranges:
-        if merged_range.min_row == 13:  # If the merge starts from row 13
+        if merged_range.min_row == row_ref_odd:
             start_col, end_col = merged_range.min_col, merged_range.max_col
-            for row_index in range(13, new_sheet.max_row + 1):
+            for row_index in range(table_start_row, new_sheet.max_row + 1):
                 new_sheet.merge_cells(
                     start_row=row_index,
                     start_column=start_col,
@@ -204,10 +212,14 @@ def split_csv_to_excel(
     output_folder: str,
     product_name: str,
     N: int,
+    table_start_row: int = 13,
+    header_rows: int = 12,
+    row_ref_odd: int = 13,
+    row_ref_even: int = 14,
 ) -> None:
     """
     Splits the data from the CSV into N Excel files, maintaining the header and formatting.
-    Data will always be written starting from row 13 in the output file.
+    Data will always be written starting from the specified table_start_row in the output file.
 
     Args:
         model_xlsx_path (str): Path to the Excel file used as a model for formatting.
@@ -215,80 +227,49 @@ def split_csv_to_excel(
         output_folder (str): Folder where the output Excel files will be saved.
         product_name (str): The base name for the output files.
         N (int): Number of output files to split the data into.
+        table_start_row (int): Row index where the table data starts.
+        header_rows (int): Number of rows that make up the header.
+        row_ref_odd (int): Reference row for the style of odd rows.
+        row_ref_even (int): Reference row for the style of even rows.
     """
-    # Open the CSV and read all rows
     with open(source_csv_file, mode="r", newline="", encoding="utf-8") as f:
         reader = csv.reader(f, delimiter=";")
         rows = list(reader)
 
-    total_rows = len(rows) - 12  # Exclude the first 12 header rows
-    rows_per_file = (total_rows // N) + (
-        total_rows % N > 0
-    )  # Calculate the number of rows per file
+    total_rows = len(rows) - header_rows  # Exclude the header rows
+    rows_per_file = (total_rows // N) + (total_rows % N > 0)
 
-    # Initialize the progress bar
     with tqdm(total=N, desc="Splitting files", unit="file") as pbar:
         for file_index in range(N):
             new_wb = Workbook()
             new_sheet = new_wb.active
 
             # Copy the header from the original Excel file
-            copy_header_and_style(model_xlsx_path, new_sheet)
+            copy_header_and_style(model_xlsx_path, new_sheet, header_rows)
 
             # Calculate the range of rows to copy into this file
-            start_row = 12 + file_index * rows_per_file
-            end_row = min(12 + (file_index + 1) * rows_per_file, len(rows))
+            start_row = header_rows + file_index * rows_per_file
+            end_row = min(header_rows + (file_index + 1) * rows_per_file, len(rows))
 
-            # Adjustment: always write data starting from row 13 in the new file
-            new_start_row = 13
+            new_start_row = table_start_row
 
-            # Copy the data rows from the CSV starting at start_row
             for row_index in range(start_row, end_row):
                 for col_index, cell_value in enumerate(rows[row_index], 1):
                     new_sheet.cell(
                         row=new_start_row + (row_index - start_row),
                         column=col_index,
-                        value=format_date_value(cell_value),
+                        value=format_value(cell_value),
                     )
 
             # Apply alternating styles and dimensions
-            apply_alternating_styles_and_dimensions(model_xlsx_path, new_sheet)
+            apply_alternating_styles_and_dimensions(
+                model_xlsx_path, new_sheet, table_start_row, row_ref_odd, row_ref_even
+            )
 
-            # Save the new Excel file
             output_file_path = os.path.join(
                 output_folder, f"{product_name}_{file_index + 1}.xlsx"
             )
             new_wb.save(output_file_path)
 
             logger.info(f"Excel file created: {output_file_path}")
-            pbar.update(1)  # Update the progress bar
-
-
-def process_large_excel(
-    model_xlsx_path: str,
-    input_file_excel: str,
-    output_folder: str,
-    product_name: str,
-    N: int,
-) -> None:
-    """
-    Processes a large Excel file by converting it to CSV and then splitting it into smaller Excel files.
-
-    Args:
-        model_xlsx_path (str): Path to the Excel file used as a model for formatting.
-        input_file_excel (str): Path to the input Excel file.
-        output_folder (str): Folder where the output Excel files will be saved.
-        product_name (str): The base name for the output files.
-        N (int): Number of output files to split the data into.
-    """
-    # Generate output file names
-    base_csv_file_name = os.path.splitext(os.path.basename(input_file_excel))[0]
-    output_csv_file = os.path.join(output_folder, f"{base_csv_file_name}.csv")
-
-    # Convert Excel to CSV
-    excel_to_csv(input_file_excel, output_csv_file)
-
-    # Split the CSV into smaller Excel files
-    split_csv_to_excel(model_xlsx_path, output_csv_file, output_folder, product_name, N)
-
-    logger.info("Processing complete.")
+            pbar.update(1)  # Update progress bar

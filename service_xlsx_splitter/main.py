@@ -44,9 +44,21 @@ def main() -> None:
     NUM_TARGET_FILE: int | None = int(
         configs.get(ConfigKeys.NUM_TARGET_FILE.value, None)
     )
+    TABLE_START_ROW: int = int(configs.get(ConfigKeys.TABLE_START_ROW.value, None))
+    HEADER_ROWS: int = int(configs.get(ConfigKeys.HEADER_ROWS.value, None))
+    ROW_REF_ODD: int = int(configs.get(ConfigKeys.ROW_REF_ODD.value, None))
+    ROW_REF_EVEN: int = int(configs.get(ConfigKeys.ROW_REF_EVEN.value, None))
 
     # Check if mandatory configuration values are present
-    if not (INPUT_XLSX_NAME and MODEL_XLSX_NAME and NUM_TARGET_FILE):
+    if not (
+        INPUT_XLSX_NAME
+        and MODEL_XLSX_NAME
+        and NUM_TARGET_FILE
+        and TABLE_START_ROW
+        and HEADER_ROWS
+        and ROW_REF_EVEN
+        and ROW_REF_ODD
+    ):
         logger.error("Input configuration missing.")
         exit(-1)
 
@@ -70,13 +82,19 @@ def main() -> None:
 
     # Split the CSV into multiple Excel files using the specified model for formatting
     logger.info(f"Splitting CSV into {NUM_TARGET_FILE} Excel files...")
+
     split_csv_to_excel(
         model_xlsx_path=MODEL_XLSX_PATH,
         source_csv_file=INPUT_CSV_PATH,
         output_folder=OUTPUT_FOLDER,
         product_name=INPUT_XLSX_NAME,
         N=NUM_TARGET_FILE,
+        table_start_row=TABLE_START_ROW,
+        header_rows=HEADER_ROWS,
+        row_ref_odd=ROW_REF_ODD,
+        row_ref_even=ROW_REF_EVEN,
     )
+
     logger.info(f"Files successfully created in {OUTPUT_FOLDER}")
 
 
