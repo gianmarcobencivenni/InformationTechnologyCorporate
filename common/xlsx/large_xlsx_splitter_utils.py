@@ -1,3 +1,12 @@
+"""
+Utility file to process large Excel files and split them into smaller Excel files while maintaining formatting and styles.
+This script includes functionality for:
+- Converting an Excel file to CSV for easier data processing.
+- Copying headers and styles from an Excel file to the output.
+- Applying alternating row styles and dimensions to the output.
+- Splitting CSV data into multiple Excel files with header preservation and row formatting.
+"""
+
 import csv
 import os
 import sys
@@ -17,15 +26,6 @@ CWD = os.getcwd()
 sys.path.append(CWD)
 
 from common.utilities.logger import SingletonLogger
-
-"""
-Utility file to process large Excel files and split them into smaller Excel files while maintaining formatting and styles.
-This script includes functionality for:
-- Converting an Excel file to CSV for easier data processing.
-- Copying headers and styles from an Excel file to the output.
-- Applying alternating row styles and dimensions to the output.
-- Splitting CSV data into multiple Excel files with header preservation and row formatting.
-"""
 
 # Configure logging
 logger = SingletonLogger.get_instance("my_logger", log_to_console=True)
@@ -389,3 +389,6 @@ def split_csv_to_excel(
 
             logger.info(f"Excel file created: {output_file_path}")
             pbar.update(1)  # Update progress bar
+
+
+# TODO: gestione separata delle righe aventi su colonna N. doc. il valore CA2023 (creazione csv a parte e relativi excel)
