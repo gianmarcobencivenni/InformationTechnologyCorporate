@@ -29,22 +29,23 @@ existing CSV file if available, allowing users to skip the CSV generation step.
 2. Define the desired configuration in the `config.json` file.
 3. Run the script with the command:
    ```bash
-   python .\service_xlsx_splitter\main.py
+   python .\\service_xlsx_splitter\\main.py
 """
 
-import argparse
 import os
 import sys
+from argparse import Namespace
 
 # Add current working directory to system path for importing modules
 CWD = os.getcwd()
 sys.path.append(CWD)
 
+from common.utilities.argument_parser import parse_args
 from common.utilities.config_loader import load_json_configs_dict
 from common.utilities.configuration_keys import ConfigKeys
 from common.utilities.logger import SingletonLogger
-from common.xlsx.large_xlsx_splitter_utils import excel_to_csv, split_csv_to_excel
-
+from common.xlsx.large_xlsx_splitter_utils import split_csv_to_excel
+from service_xlsx_splitter.subroutines import extract_csv_from_excel, process_csv_file
 
 CONFIG_JSON_PATH = os.path.join(CWD, "service_xlsx_splitter", "config.json")
 
@@ -59,26 +60,15 @@ def main() -> None:
     The CSV conversion can be skipped if an existing CSV file is already present by passing the --csv option.
     """
 
-    # Argument parser setup for command-line options
-    parser = argparse.ArgumentParser(description="Process Excel files and split them.")
-    parser.add_argument(
-        "--csv", action="store_true", help="Use existing CSV file, if present"
-    )
-    args = parser.parse_args()
+    args: Namespace = parse_args()
 
     # Load configuration values from the JSON file
     configs: dict = load_json_configs_dict(json_path=CONFIG_JSON_PATH)
 
     # Fetch configuration values for input and model Excel names and the number of target files
-    INPUT_XLSX_NAME: str | None = str(
-        configs.get(ConfigKeys.INPUT_XLSX_NAME.value, None)
-    )
-    MODEL_XLSX_NAME: str | None = str(
-        configs.get(ConfigKeys.MODEL_XLSX_NAME.value, None)
-    )
-    NUM_TARGET_FILE: int | None = int(
-        configs.get(ConfigKeys.NUM_TARGET_FILE.value, None)
-    )
+    INPUT_XLSX_NAME: str = str(configs.get(ConfigKeys.INPUT_XLSX_NAME.value, None))
+    MODEL_XLSX_NAME: str = str(configs.get(ConfigKeys.MODEL_XLSX_NAME.value, None))
+    NUM_TARGET_FILE: int = int(configs.get(ConfigKeys.NUM_TARGET_FILE.value, None))
     TABLE_START_ROW: int = int(configs.get(ConfigKeys.TABLE_START_ROW.value, None))
     HEADER_ROWS: int = int(configs.get(ConfigKeys.HEADER_ROWS.value, None))
     ROW_REF_ODD: int = int(configs.get(ConfigKeys.ROW_REF_ODD.value, None))
@@ -102,25 +92,25 @@ def main() -> None:
     INPUT_CSV_PATH: str = os.path.join(CWD, "input", f"{INPUT_XLSX_NAME}.csv")
     OUTPUT_FOLDER: str = os.path.join(CWD, "output", INPUT_XLSX_NAME)
     MODEL_XLSX_PATH: str = os.path.join(CWD, "input", f"{MODEL_XLSX_NAME}.xlsx")
+    PROCESSED_CSV_PATH: str = os.path.join(CWD, "input", f"{INPUT_XLSX_NAME}_proc.csv")
 
-    # If the --csv option is not specified, generate a CSV from the Excel file
-    if not args.csv:
-        logger.info(f"Generating CSV file from {INPUT_XLSX_PATH}...")
-        excel_to_csv(
-            input_file_excel=INPUT_XLSX_PATH,
-            output_file_csv=INPUT_CSV_PATH,
-            delimiter=";",  # CSV delimiter (using this since some fields may contain commas: ',')
-        )
-        logger.info(f"CSV created: {INPUT_CSV_PATH}")
-    else:
-        logger.info(f"Using existing CSV file: {INPUT_CSV_PATH}")
+    extract_csv_from_excel(
+        args=args,
+        input_xlsx_path=INPUT_XLSX_PATH,
+        output_csv_path=INPUT_CSV_PATH,
+    )
 
-    # Split the CSV into multiple Excel files using the specified model for formatting
-    logger.info(f"Splitting CSV into {NUM_TARGET_FILE} Excel files...")
+    process_csv_file(
+        args=args,
+        input_csv_path=INPUT_CSV_PATH,
+        processed_csv_path=PROCESSED_CSV_PATH,
+    )
+
+    SOURCE_CSV_FILE = PROCESSED_CSV_PATH if args.process_csv else INPUT_CSV_PATH
 
     split_csv_to_excel(
         model_xlsx_path=MODEL_XLSX_PATH,
-        source_csv_file=INPUT_CSV_PATH,
+        source_csv_file=SOURCE_CSV_FILE,
         output_folder=OUTPUT_FOLDER,
         product_name=INPUT_XLSX_NAME,
         N=NUM_TARGET_FILE,

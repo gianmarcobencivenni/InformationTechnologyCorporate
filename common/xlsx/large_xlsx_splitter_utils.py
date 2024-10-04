@@ -3,7 +3,9 @@ import os
 import sys
 from copy import copy
 from datetime import datetime
+from typing import Any
 
+import pandas as pd
 from openpyxl import Workbook, load_workbook
 from openpyxl.cell.cell import Cell
 from openpyxl.utils import get_column_letter
@@ -27,6 +29,13 @@ This script includes functionality for:
 
 # Configure logging
 logger = SingletonLogger.get_instance("my_logger", log_to_console=True)
+
+
+def comma_to_float(value):
+    """Convert a string with a comma decimal separator to a float."""
+    if isinstance(value, str):
+        value = value.replace(",", ".")
+    return float(value)
 
 
 def excel_to_csv(
@@ -53,6 +62,81 @@ def excel_to_csv(
             f.write("\n")
 
     logger.info(f"CSV file created: {output_file_csv}")
+
+
+def process_csv(input_csv: str, output_csv: str) -> None:
+    """
+    Process a CSV file by modifying the 'N. riga' column based on consecutive rows sharing the same 'N. doc.' value,
+    and appending the last line from the original CSV as plain text at the end of the output CSV.
+
+    This function reads the specified input CSV file, processes the data to adjust the 'N. riga' column,
+    and writes the results to a new output CSV file. The first 12 lines of the input file are treated as header
+    lines and written directly to the output. The last line of the input CSV is also appended as plain text.
+
+    Parameters:
+    - input_csv (str): Path to the input CSV file.
+    - output_csv (str): Path where the processed CSV file will be saved.
+    """
+
+    # Read the original CSV file, excluding the last row
+    with open(input_csv, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    # The last line to be added separately at the end of the output
+    last_line = lines[-1]
+
+    # Write the header lines (first 12 lines) to the output CSV as plain text
+    with open(output_csv, "w", encoding="utf-8") as out_csv:
+        out_csv.writelines(lines[:12])  # First 12 lines are considered the header
+
+    # Exclude the header and the last line, load the table data into a DataFrame
+    df: pd.DataFrame = pd.read_csv(
+        input_csv,
+        delimiter=";",
+        header=None,
+        skiprows=12,
+        skipfooter=1,
+        engine="python",
+        dtype={
+            1: str,
+            11: str,
+        },  # Specify 'N. riga' and 'N. doc.' as strings
+    )
+
+    # Initialize variables to track 'N. riga' column
+    last_n_riga: Any = None
+    current_n_riga: Any = None
+
+    # Process the DataFrame starting from row 13 (index 0 after skiprows)
+    for i in range(len(df)):
+        n_doc = df.iloc[i, 11]  # 'N. doc.' column
+        if i == 0 or n_doc != df.iloc[i - 1, 11]:  # New series detected
+            # If not the first series, increment and set new 'N. riga' value
+            if i == 0 or last_n_riga is not None:
+                current_n_riga = str(
+                    int(last_n_riga if last_n_riga else df.iloc[i, 1]) + 1
+                ).zfill(
+                    8
+                )  # Increment 'N. riga'
+            else:
+                current_n_riga = df.iloc[i, 1]  # The first entry remains unchanged
+
+            last_n_riga = current_n_riga  # Update last 'N. riga'
+            df.iloc[i, 1] = current_n_riga  # Set the new value for 'N. riga'
+        else:
+            # Same series, set 'N. riga' as empty
+            df.iloc[i, 1] = ""
+
+    # Write the processed DataFrame to the output CSV, excluding the header
+    df.to_csv(
+        output_csv, sep=";", index=False, header=False, mode="a", encoding="utf-8"
+    )
+
+    # Append the last line as plain text to the output CSV
+    with open(output_csv, "a", encoding="utf-8") as out_csv:
+        out_csv.write(last_line)
+
+    logger.info(f"CSV file successfully generated: {output_csv}")
 
 
 def copy_header_and_style(
@@ -110,15 +194,7 @@ def format_value(value) -> str | int | float:
             parsed_date = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
             return parsed_date.strftime("%d/%m/%Y")  # Format date as 'DD/MM/YYYY'
         except ValueError:
-            # If the value is not a date, continue to check if it's a number
-            try:
-                # Check if the value can be converted to a float
-                num_value = float(value)
-                return int(num_value) if num_value.is_integer() else num_value
-            except ValueError:
-                # If not a number, return the original value
-                return value
-    return value  # Return the original value if not a string
+            return value  # Return the original value if not a string
 
 
 def copy_style(

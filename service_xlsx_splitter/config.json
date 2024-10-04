@@ -1,7 +1,7 @@
 {
     "input_xlsx_name" : "LG 30_12_2023",
     "model_xlsx_name" : "LG 30_12_2023",
-    "num_target_file" : 2,
+    "num_target_file" : 1,
     "table_start_row" : 13,
     "header_rows" :  12,
     "row_ref_odd" : 13,
