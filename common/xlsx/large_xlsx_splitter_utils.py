@@ -206,6 +206,40 @@ def apply_alternating_styles_and_dimensions(
                 )
 
 
+def apply_last_row_format(
+    model_xlsx_path: str, new_sheet: Worksheet, model_last_row: int = 45
+) -> None:
+    """
+    Applies the formatting from a specific row (default is row 45) in the model Excel file
+    to the last row of the provided worksheet.
+
+    This function is designed to format only the last row of the new_sheet by copying cell
+    styles (e.g., font, border, fill, number format, alignment) from the specified row in the
+    model Excel file.
+
+    :param model_xlsx_path: Path to the model Excel file from which to copy the row formatting.
+    :param new_sheet: The worksheet to which the formatting will be applied.
+    :param model_last_row: The row number in the model Excel file to copy styles from. Defaults to 45.
+
+    :return: None
+    """
+    # Load the model Excel file and the last generated Excel file
+    model_wb = load_workbook(model_xlsx_path)
+    model_ws = model_wb.active
+
+    # Get the last row of the output file
+    last_row_output = new_sheet.max_row
+
+    max_col = model_ws.max_column
+
+    # Copy cell styles
+    for col_index in range(1, max_col + 1):
+        target_cell = new_sheet.cell(row=last_row_output, column=col_index)
+        copy_style(model_ws, target_cell, model_last_row, col_index)
+
+    model_wb.close()
+
+
 def split_csv_to_excel(
     model_xlsx_path: str,
     source_csv_file: str,
@@ -265,6 +299,12 @@ def split_csv_to_excel(
             apply_alternating_styles_and_dimensions(
                 model_xlsx_path, new_sheet, table_start_row, row_ref_odd, row_ref_even
             )
+
+            if file_index == N - 1:
+                apply_last_row_format(
+                    model_xlsx_path=model_xlsx_path,
+                    new_sheet=new_sheet,
+                )
 
             output_file_path = os.path.join(
                 output_folder, f"{product_name}_{file_index + 1}.xlsx"
